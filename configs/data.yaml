@@ -1,0 +1,10 @@
+data:
+  N: 2
+  A: 0
+  B: 999
+  ops: ["+"]
+  n_samples: 70000
+  seed: 0
+  train_ratio: 0.8
+  val_ratio: 0.1
+  seq_len: 64

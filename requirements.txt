@@ -1,0 +1,6 @@
+torch>=2.0.0
+pytorch-lightning>=2.0.0
+tensorboard
+numpy
+pyyaml
+wandb
