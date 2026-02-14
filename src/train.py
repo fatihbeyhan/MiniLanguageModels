@@ -93,6 +93,12 @@ def main():
         default=0,
         help="Log random input samples every N steps (0 = disabled)",
     )
+    parser.add_argument(
+        "--resume",
+        type=str,
+        default=None,
+        help="Path to checkpoint to resume from (e.g. checkpoints/gpt2/last.ckpt)",
+    )
     args = parser.parse_args()
 
     pl.seed_everything(args.seed)
@@ -223,7 +229,7 @@ def main():
     shutil.copy2(args.config, os.path.join(ckpt_dir, "config.yaml"))
 
     # ── train ──────────────────────────────────────────────────────────
-    trainer.fit(lit, train_dl, val_dl)
+    trainer.fit(lit, train_dl, val_dl, ckpt_path=args.resume)
 
     # ── write results.json ─────────────────────────────────────────────
     callback_metrics = {k: v.item() if hasattr(v, "item") else v
