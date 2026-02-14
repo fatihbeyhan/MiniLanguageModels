@@ -28,6 +28,7 @@ class LitLM(pl.LightningModule):
         warmup_steps: int = 100,
         max_steps: int = 10000,
         moe_aux_weight: float = 0.01,
+        log_samples_every: int = 0,  # 0 = disabled, N = log every N steps
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model", "tokenizer"])
@@ -38,7 +39,19 @@ class LitLM(pl.LightningModule):
         self.warmup_steps = warmup_steps
         self.max_steps = max_steps
         self.moe_aux_weight = moe_aux_weight
+        self.log_samples_every = log_samples_every
         self.loss_fn = nn.CrossEntropyLoss(reduction="none")
+
+    def _log_batch_samples(self, batch, prefix: str, n: int = 2):
+        """Log n random samples from batch (tokens + decoded)."""
+        input_ids = batch["input_ids"]
+        indices = torch.randperm(input_ids.size(0))[:n]
+        print(f"\n── {prefix} samples (step {self.global_step}) ──")
+        for idx in indices:
+            tokens = input_ids[idx].tolist()
+            decoded = self.tokenizer.decode(tokens)
+            print(f"  tokens: {tokens}")
+            print(f"  decoded: {decoded!r}")
 
     # ── forward ────────────────────────────────────────────────────────
 
@@ -79,12 +92,15 @@ class LitLM(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         loss = self._compute_loss(batch)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        if self.log_samples_every > 0 and self.global_step % self.log_samples_every == 0:
+            self._log_batch_samples(batch, "Train")
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss = self._compute_loss(batch)
         self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-
+        if self.log_samples_every > 0 and batch_idx == 0:
+            self._log_batch_samples(batch, "Val")
         acc = self._exact_match(batch)
         self.log("val_exact_match", acc, on_step=False, on_epoch=True, prog_bar=True)
         return loss

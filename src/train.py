@@ -87,6 +87,12 @@ def main():
         default=None,
         help="Run name for checkpoints/logs (defaults to model.name from config)",
     )
+    parser.add_argument(
+        "--log_samples_every",
+        type=int,
+        default=0,
+        help="Log random input samples every N steps (0 = disabled)",
+    )
     args = parser.parse_args()
 
     pl.seed_everything(args.seed)
@@ -126,6 +132,7 @@ def main():
         num_workers=4,
         pin_memory=True,
         collate_fn=collate,
+        persistent_workers=True,
     )
     val_dl = torch.utils.data.DataLoader(
         val_ds,
@@ -134,7 +141,18 @@ def main():
         num_workers=4,
         pin_memory=True,
         collate_fn=collate,
+        persistent_workers=True,
     )
+
+    # ── log sample inputs (optional) ──────────────────────────────────
+    print("\n── Sample training inputs ──")
+    sample_batch = next(iter(train_dl))
+    for i in range(min(3, sample_batch["input_ids"].size(0))):
+        tokens = sample_batch["input_ids"][i].tolist()
+        decoded = tokenizer.decode(tokens)
+        print(f"  [{i}] tokens: {tokens}")
+        print(f"      decoded: {decoded!r}")
+    print()
 
     # ── lightning module ───────────────────────────────────────────────
     lit = LitLM(
@@ -144,6 +162,7 @@ def main():
         weight_decay=train_cfg.get("weight_decay", 0.1),
         warmup_steps=train_cfg.get("warmup_steps", 100),
         max_steps=train_cfg.get("max_steps", 10000),
+        log_samples_every=args.log_samples_every,
     )
 
     # ── logger ─────────────────────────────────────────────────────────
