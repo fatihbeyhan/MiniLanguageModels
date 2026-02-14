@@ -17,7 +17,7 @@ from functools import partial
 import torch
 import yaml
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 from .tokenizer import CharTokenizer
 from .dataset import ArithmeticDataset, collate_fn
@@ -200,7 +200,6 @@ def main():
             save_top_k=2,
             save_last=True,
         ),
-        EarlyStopping(monitor="val_loss", patience=5, mode="min", check_on_train_epoch_end=False),
     ]
 
     # ── precision ──────────────────────────────────────────────────────
