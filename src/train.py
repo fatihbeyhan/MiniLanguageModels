@@ -200,7 +200,7 @@ def main():
             save_top_k=2,
             save_last=True,
         ),
-        EarlyStopping(monitor="val_loss", patience=5, mode="min"),
+        EarlyStopping(monitor="val_loss", patience=5, mode="min", check_on_train_epoch_end=False),
     ]
 
     # ── precision ──────────────────────────────────────────────────────
